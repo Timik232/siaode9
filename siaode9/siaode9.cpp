@@ -6,6 +6,7 @@
 #include <vector>
 #include <iomanip>
 using namespace std;
+const int N = 100;  //переменная, отвечающая за количество элементов, которые будут сгенерированы
 struct business
 {
 	string license;
@@ -13,6 +14,144 @@ struct business
 	string founder;
 	business(string license, string name, string founder) :name(name), license(license), founder(founder) {};
 };
+struct node 
+{
+	node* next[36];     //Массив указателей на следующие вершины
+						//next[i] - указатель на следующую вершину, соответствующую символу ('a' + i)
+						//(используются только строчные латинские буквы и цифры)
+
+	int strings;        //Количество строк, заканчивающихся в этой вершине.
+	business* end_b;
+	node()
+	{
+		for (int i = 0; i < 36; i++) 
+		{   //изначально заполняем next нулевыми указателями,
+			next[i] = nullptr;           //так как следующие вершины ещё не созданы
+		}
+
+		strings = 0;
+		end_b = nullptr;
+	}
+};
+node* root = new node();     //корневая вершина бора, соответствующая пустой строке.
+
+void add(const string& s, business* end_b) 
+{
+	node* cur_v = root;     //текущая вершина
+
+	for (int i = 0; i < s.length(); i++) 
+	{
+		char c = s[i];
+
+		if (cur_v->next[c - 'a'] == nullptr)
+		{
+			cur_v->next[c - 'a'] = new node();
+		}
+		else if (cur_v->next[c - '0'] == nullptr)
+		{
+			cur_v->next[c - '0'] = new node();
+		}
+		cur_v = cur_v->next[c - 'a'];
+		
+	}
+	cur_v->end_b = end_b;
+	cur_v->strings++;
+}
+bool has(const string& s) //проверка, есть ли элемент в графе
+{
+	node* cur_v = root;
+
+	for (int i = 0; i < s.length(); i++) 
+	{
+		cur_v = cur_v->next[s[i] - 'a'];
+		if (cur_v == nullptr) 
+		{
+			return false;
+		}
+	}
+	return cur_v->strings > 0;
+}
+
+void write(node* v = root) //вывести
+{
+	string cur_str = "";
+
+	for (int i = 0; i < v->strings; i++) 
+	{
+		cout << cur_str << endl;
+	}
+
+	for (int i = 0; i < 26; i++) 
+	{
+		if (v->next[i] != nullptr) 
+		{
+			cur_str.push_back('a' + i);
+			write(v->next[i]);
+			cur_str.pop_back();
+		}
+	}
+}
+void bor_find(vector <business> strings, string lic)
+{
+	node* cur_v = root;
+	bool flag = true;
+	for (int i = 0; i < lic.length(); i++)
+	{
+		if (i<5)
+			cur_v = cur_v->next[lic[i] - 'a'];
+		else if (i>4)
+			cur_v = cur_v->next[lic[i] - '0'];
+		if (cur_v != nullptr)
+		{
+			continue;
+		}
+		else
+		{
+			flag = false;
+			cout << "Key not found\n";
+			break;
+		}
+	}
+	if (flag)
+		cout << cur_v->end_b->license << " " << cur_v->end_b->name << " " << cur_v->end_b->founder;
+}
+/*struct bohr_v
+{
+	int next_vrtx[36], pat_num;
+	bool flag;
+};
+
+bohr_v make_bohr_vrtx() //создание корня
+{
+	bohr_v v;
+	//(255)=(2^8-1)=(все единицы в каждом байте памяти)=(-1 в дополнительном коде целого 4-байтного числа int)
+	memset(v.next_vrtx, 255, sizeof(v.next_vrtx));
+	v.flag = false;
+	return v;
+}
+void bohr_ini(vector <bohr_v> &bohr)  //инициализация бора
+{
+	//добавляем единственную вершину - корень
+	bohr.push_back(make_bohr_vrtx());
+}
+void add_string_to_bohr(const string& s, vector <bohr_v> &bohr) //добавление элемента
+{
+	int num = 0; //начинаем с корня   
+	for (int i = 0; i < s.length(); i++) 
+	{
+		char ch = s[i] - 'a'; //получаем номер в алфавите
+		if (bohr[num].next_vrtx[ch] == -1) //-1 - признак отсутствия ребра
+		{ 
+			bohr.push_back(make_bohr_vrtx());
+			bohr[num].next_vrtx[ch] = bohr.size() - 1;
+		}
+		num = bohr[num].next_vrtx[ch];
+	}
+	bohr[num].flag = true;
+	pattern.push_back(s);
+	bohr[num].pat_num = pattern.size() - 1;
+}*/
+
 void print(vector <business> strings, int n) //вывод элементов таблицы
 {
 	cout << setw(10) << "license" << setw(10) << "name" << setw(10) << "founder" << endl;
@@ -68,28 +207,30 @@ void barrier_find(vector <business> strings, string lic) //поиск с бар�
 	}
 	else cout << "Key not found\n";
 }
-void bor_find(vector <business> strings, string lic)
-{
 
-}
 int main()
 {
-	int n = 10000; //переменная, отвечающая за количество элементов, которые будут сгенерированы
 	srand(time(0));
 	vector <business> strings;
-	rand_val(strings, n);
+	rand_val(strings, N);
 	//print(strings,0); //вывод сгенерированной таблицы
-	cout << "find " << strings[8000].license << endl;
+	cout << "find " << strings[80].license << endl;
 	unsigned int start_time = clock();
-	lin_find(strings, strings[8000].license); 
+	lin_find(strings, strings[80].license); 
 	unsigned int end_time = clock();
 	cout << "Time of linear find: " << end_time - start_time << endl;
 	start_time = clock();
-	barrier_find(strings, strings[8000].license);
+	barrier_find(strings, strings[80].license);
 	end_time = clock();
 	cout << "Time of barrier find: " << end_time - start_time << endl;
+	//vector <node*> bohr;
+	for (int i = 0; i < strings.size(); i++)
+	{
+		add(strings[i].license, strings[i]);
+	}
+	write();
 	start_time = clock();
-	bor_find(strings, strings[8000].license);
+	//bor_find(strings, strings[8000].license);
 	end_time = clock();
 	cout << "Time of bor find: " << end_time - start_time << endl;
 }
